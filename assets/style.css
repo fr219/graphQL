@@ -1,0 +1,342 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: #0a0e27;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+}
+
+.cosmic-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at bottom, #1b2735 0%, #090a0f 100%);
+    z-index: 0;
+}
+
+.stars {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: white;
+    border-radius: 50%;
+    animation: twinkle 3s infinite;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+.nebula {
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    filter: blur(80px);
+    opacity: 0.3;
+    animation: float 20s infinite ease-in-out;
+}
+
+.nebula-1 {
+    background: radial-gradient(circle, #9d50bb 0%, transparent 70%);
+    top: -200px;
+    left: -200px;
+}
+
+.nebula-2 {
+    background: radial-gradient(circle, #6e8efb 0%, transparent 70%);
+    bottom: -200px;
+    right: -200px;
+    animation-delay: -10s;
+}
+
+@keyframes float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(30px, -30px) scale(1.1); }
+    66% { transform: translate(-20px, 20px) scale(0.9); }
+}
+
+.login-container {
+    position: relative;
+    z-index: 10;
+    width: 90%;
+    max-width: 440px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+    from {
+    opacity: 0;
+    transform: translateY(40px);
+    }
+    to {
+    opacity: 1;
+    transform: translateY(0);
+    }
+}
+
+.cosmic-card {
+    background: rgba(15, 20, 45, 0.8);
+    backdrop-filter: blur(20px);
+    border-radius: 30px;
+    padding: 3rem 2.5rem;
+    border: 1px solid rgba(157, 80, 187, 0.2);
+    box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 0 40px rgba(157, 80, 187, 0.1),
+    inset 0 0 60px rgba(157, 80, 187, 0.05);
+    position: relative;
+    overflow: hidden;
+}
+
+.cosmic-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(157, 80, 187, 0.1) 0%, transparent 70%);
+    animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.logo-area {
+    text-align: center;
+    margin-bottom: 2.5rem;
+    position: relative;
+}
+
+.cosmic-logo {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    position: relative;
+}
+
+.cosmic-logo svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 20px rgba(157, 80, 187, 0.6));
+}
+
+h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    letter-spacing: 1px;
+}
+
+.subtitle {
+    color: #a0aec0;
+    font-size: 0.9rem;
+    font-weight: 300;
+}
+
+.form-group {
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.input-wrapper {
+    position: relative;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    pointer-events: none;
+    transition: all 0.3s ease;
+    z-index: 2;
+}
+
+input {
+    width: 100%;
+    padding: 1rem 1rem 1rem 3.5rem;
+    background: rgba(20, 30, 60, 0.6);
+    border: 2px solid rgba(157, 80, 187, 0.2);
+    border-radius: 16px;
+    color: #e2e8f0;
+    font-size: 1rem;
+    font-family: 'Poppins', sans-serif;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+input:focus {
+    outline: none;
+    border-color: #a78bfa;
+    background: rgba(20, 30, 60, 0.8);
+    box-shadow: 0 0 20px rgba(167, 139, 250, 0.3);
+}
+
+input:focus + .input-icon {
+    color: #a78bfa;
+    transform: translateY(-50%) scale(1.1);
+}
+
+input::placeholder {
+    color: #64748b;
+}
+
+.cosmic-button {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #a78bfa 0%, #ec4899 100%);
+    border: none;
+    border-radius: 16px;
+    color: white;
+    font-size: 1.1rem;
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    margin-top: 1rem;
+}
+
+.cosmic-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.cosmic-button:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.cosmic-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(167, 139, 250, 0.4);
+}
+
+.cosmic-button:active {
+    transform: translateY(0);
+}
+
+.cosmic-button span {
+    position: relative;
+    z-index: 1;
+}
+
+.loading-spinner {
+    display: none;
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.cosmic-button.loading span {
+    display: none;
+}
+
+.cosmic-button.loading .loading-spinner {
+    display: block;
+}
+
+.error-message {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    border-radius: 12px;
+    padding: 0.875rem 1rem;
+    color: #fca5a5;
+    font-size: 0.9rem;
+    margin-top: 1rem;
+    text-align: center;
+    animation: shake 0.5s;
+    display: none;
+}
+
+.error-message.show {
+    display: block;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.shooting-star {
+    position: absolute;
+    height: 2px;
+    background: linear-gradient(90deg, #fff, transparent);
+    animation: shoot 3s linear infinite;
+}
+
+@keyframes shoot {
+    from {
+    transform: translateX(0) translateY(0);
+    opacity: 1;
+    }
+    to {
+    transform: translateX(-300px) translateY(300px);
+    opacity: 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .cosmic-card {
+    padding: 2rem 1.5rem;
+    border-radius: 24px;
+    }
+
+    h1 {
+    font-size: 1.6rem;
+    }
+
+    .cosmic-logo {
+    width: 60px;
+    height: 60px;
+    }
+}

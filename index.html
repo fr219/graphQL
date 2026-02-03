@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cosmic Portal - Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <div class="cosmic-bg"></div>
+  <div class="nebula nebula-1"></div>
+  <div class="nebula nebula-2"></div>
+  
+  <div class="stars" id="stars"></div>
+
+  <div class="login-container">
+    <div class="cosmic-card">
+      <div class="logo-area">
+        <div class="cosmic-logo">
+          <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="planetGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:1" />
+                <stop offset="100%" style="stop-color:#ec4899;stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <circle cx="50" cy="50" r="30" fill="url(#planetGradient)"/>
+            <ellipse cx="50" cy="50" rx="45" ry="10" fill="none" stroke="url(#planetGradient)" stroke-width="3" opacity="0.6"/>
+            <circle cx="30" cy="30" r="3" fill="white" opacity="0.8"/>
+            <circle cx="70" cy="40" r="2" fill="white" opacity="0.6"/>
+            <circle cx="60" cy="65" r="2.5" fill="white" opacity="0.7"/>
+          </svg>
+        </div>
+        <h1>Cosmic Portal</h1>
+        <p class="subtitle">Enter your learning universe</p>
+      </div>
+
+      <form id="login-form">
+        <div class="form-group">
+          <div class="input-wrapper">
+            <input type="text" id="identifier" placeholder="Username or Email" required autocomplete="username">
+            <div class="input-icon">✦</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <div class="input-wrapper">
+            <input type="password" id="password" placeholder="Password" required autocomplete="current-password">
+            <div class="input-icon">★</div>
+          </div>
+        </div>
+
+        <button type="submit" class="cosmic-button">
+          <span>Launch Into Space</span>
+          <div class="loading-spinner"></div>
+        </button>
+      </form>
+
+      <div class="error-message" id="error"></div>
+    </div>
+  </div>
+
+  <script src="/js/ui.js"></script>
+
+  <script src="/js/login.js"></script>
+</body>
+</html>
