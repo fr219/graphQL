@@ -1,4 +1,7 @@
-// Profile page - User dashboard logic
+// ========================================
+// COSMIC DASHBOARD - PROFILE PAGE LOGIC
+// ========================================
+
 const API = "https://learn.reboot01.com/api/graphql-engine/v1/graphql";
 
 // Get JWT from session storage
@@ -13,8 +16,6 @@ const tooltip = document.getElementById("tooltip");
 
 /**
  * Execute GraphQL query against the API
- * @param {string} q - GraphQL query string
- * @returns {Promise<object>} - API response data
  */
 async function query(q) {
     try {
@@ -31,20 +32,36 @@ async function query(q) {
         if (data.errors) throw new Error(data.errors[0].message);
         return data;
     } catch (err) {
-        // console.error("Query error:", err);
+        console.error("Query error:", err);
         throw err;
     }
 }
 
 /**
  * Show tooltip at cursor position
- * @param {Event} e - Mouse event
- * @param {string} text - Tooltip text content
  */
 function showTooltip(e, text) {
-    tooltip.innerHTML = text.replace(/\\n/g, '<br>');
-    tooltip.style.left = e.pageX + 15 + "px";
-    tooltip.style.top = e.pageY + 15 + "px";
+    tooltip.innerHTML = text.replace(/\n/g, '<br>');
+    
+    const tooltipRect = tooltip.getBoundingClientRect();
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    let left = clientX + 15;
+    let top = clientY + 15;
+    
+    if (left + tooltipRect.width > viewportWidth - 20) {
+        left = clientX - tooltipRect.width - 15;
+    }
+    if (top + tooltipRect.height > viewportHeight - 20) {
+        top = clientY - tooltipRect.height - 15;
+    }
+    
+    tooltip.style.left = left + "px";
+    tooltip.style.top = top + "px";
     tooltip.classList.add("show");
 }
 
@@ -56,9 +73,7 @@ function hideTooltip() {
 }
 
 /**
- * Safely set text content of an element
- * @param {string} id - Element ID
- * @param {string} val - Text value to set
+ * Safely set text content
  */
 function setText(id, val) {
     const el = document.getElementById(id);
@@ -66,9 +81,7 @@ function setText(id, val) {
 }
 
 /**
- * Format XP value to human readable format
- * @param {number} xp - XP amount
- * @returns {string} - Formatted XP string
+ * Format XP value
  */
 function formatXP(xp) {
     if (xp >= 1000000) return (xp / 1000000).toFixed(1) + ' MB';
@@ -78,7 +91,6 @@ function formatXP(xp) {
 
 /**
  * Draw line chart showing XP progression over time
- * @param {Array} transactions - Array of XP transactions
  */
 function drawLineChart(transactions) {
     const svg = document.getElementById("line-chart");
@@ -87,7 +99,7 @@ function drawLineChart(transactions) {
     let cumulative = 0;
     const points = transactions.map((t, i) => {
         cumulative += t.amount;
-        return { x: i, y: cumulative };
+        return { x: i, y: cumulative, amount: t.amount, date: t.createdAt };
     });
 
     const maxY = Math.max(...points.map(p => p.y)) || 1;
@@ -114,14 +126,12 @@ function drawLineChart(transactions) {
         </defs>
     `;
 
-    // Draw grid lines
     for (let i = 0; i <= 5; i++) {
         const y = p + i * (h - 2 * p) / 5;
         svgContent += `<line x1="${p}" y1="${y}" x2="${w - p}" y2="${y}" class="grid-line"/>`;
         svgContent += `<text x="${p - 10}" y="${y + 4}" class="axis-label" text-anchor="end">${formatXP(Math.round((5 - i) * maxY / 5))}</text>`;
     }
 
-    // Create path data
     const pathData = points.map((pt, i) => {
         const x = p + pt.x * scaleX;
         const y = h - p - pt.y * scaleY;
@@ -133,52 +143,70 @@ function drawLineChart(transactions) {
     svgContent += `<path d="${areaPath}" fill="url(#areaGrad)"/>`;
     svgContent += `<path d="${pathData}" fill="none" stroke="url(#lineGrad)" stroke-width="3" class="line-path" filter="url(#glow)"/>`;
 
-    // Draw data points
     points.forEach((pt, i) => {
         const x = p + pt.x * scaleX;
         const y = h - p - pt.y * scaleY;
 
         svgContent += `
-            <circle cx="${x}" cy="${y}" r="5" fill="#a78bfa" opacity="0" filter="url(#glow)">
+            <circle class="chart-point" 
+                cx="${x}" cy="${y}" r="5" 
+                fill="#a78bfa" 
+                opacity="0" 
+                filter="url(#glow)"
+                data-cumulative="${pt.y}"
+                data-amount="${pt.amount}"
+                data-date="${pt.date}"
+                style="cursor: pointer;"
+            >
                 <animate attributeName="opacity" from="0" to="1" dur="0.4s" begin="${i * 0.03}s" fill="freeze"/>
             </circle>
         `;
     });
 
     svg.innerHTML = svgContent;
+
+    svg.querySelectorAll('.chart-point').forEach(point => {
+        point.addEventListener('mouseenter', (e) => {
+            const cumulative = e.target.dataset.cumulative;
+            const amount = e.target.dataset.amount;
+            const date = new Date(e.target.dataset.date).toLocaleDateString();
+            showTooltip(e, `XP: ${formatXP(amount)}\nTotal: ${formatXP(cumulative)}\nDate: ${date}`);
+            e.target.setAttribute('r', '8');
+        });
+        
+        point.addEventListener('mouseleave', (e) => {
+            hideTooltip();
+            e.target.setAttribute('r', '5');
+        });
+    });
 }
 
 /**
  * Draw bar chart showing XP earned per project
- * @param {Array} transactions - Array of XP transactions
  */
-function drawBarChart(transactions) {
+function drawBarChart(projectXPData) {
     const svg = document.getElementById("bar-chart");
     const w = 900, h = 400, p = 60;
 
-    // Group XP by project
-    const projectXP = {};
-    transactions.forEach(t => {
-        const proj = t.path.split('/').pop() || 'unknown';
-        projectXP[proj] = (projectXP[proj] || 0) + t.amount;
-    });
+    const top10 = projectXPData.slice(0, 10);
+    
+    if (top10.length === 0) {
+        svg.innerHTML = `<text x="450" y="200" text-anchor="middle" fill="#64748b" font-size="14">No transactions found</text>`;
+        return;
+    }
 
-    // Get top 10 projects
-    const top10 = Object.entries(projectXP).sort((a, b) => b[1] - a[1]).slice(0, 10);
     const maxXP = Math.max(...top10.map(p => p[1])) || 1;
     const barWidth = (w - 2 * p) / top10.length - 20;
     const colors = ['#a78bfa', '#ec4899', '#8b5cf6', '#f472b6', '#c084fc', '#fb7185', '#a855f7', '#f9a8d4', '#9333ea', '#fda4af'];
 
     let svgContent = '';
 
-    // Draw grid
     for (let i = 0; i <= 5; i++) {
         const y = p + i * (h - 2 * p) / 5;
         svgContent += `<line x1="${p}" y1="${y}" x2="${w - p}" y2="${y}" class="grid-line"/>`;
         svgContent += `<text x="${p - 10}" y="${y + 4}" class="axis-label" text-anchor="end">${formatXP(Math.round((5 - i) * maxXP / 5))}</text>`;
     }
 
-    // Draw bars
     top10.forEach(([name, xp], i) => {
         const x = p + i * ((w - 2 * p) / top10.length) + 10;
         const barHeight = (xp / maxXP) * (h - 2 * p);
@@ -186,37 +214,69 @@ function drawBarChart(transactions) {
         const color = colors[i % colors.length];
 
         svgContent += `
-            <rect class="bar-animated" x="${x}" y="${h - p}" width="${barWidth}" height="0" fill="${color}" rx="6"
-                onmouseover="showTooltip(event, '${name}<br>${formatXP(xp)}')"
-                onmouseout="hideTooltip()"
-                style="filter: drop-shadow(0 4px 12px ${color}40);">
+            <rect class="bar-animated" 
+                x="${x}" y="${h - p}" 
+                width="${barWidth}" height="0" 
+                fill="${color}" rx="6"
+                data-project="${name}"
+                data-xp="${xp}"
+                style="filter: drop-shadow(0 4px 12px ${color}40); cursor: pointer;"
+            >
                 <animate attributeName="height" from="0" to="${barHeight}" dur="1s" begin="${i * 0.1}s" fill="freeze"/>
                 <animate attributeName="y" from="${h - p}" to="${y}" dur="1s" begin="${i * 0.1}s" fill="freeze"/>
             </rect>
-            <text x="${x + barWidth / 2}" y="${h - p + 20}" text-anchor="middle" font-size="10" fill="#94a3b8">${name.substring(0, 10)}</text>
+            <text x="${x + barWidth / 2}" y="${h - p + 20}" text-anchor="middle" font-size="10" fill="#94a3b8">${name.substring(0, 12)}</text>
         `;
     });
 
     svg.innerHTML = svgContent;
+
+    svg.querySelectorAll('.bar-animated').forEach(bar => {
+        bar.addEventListener('mouseenter', (e) => {
+            const project = e.target.dataset.project;
+            const xp = e.target.dataset.xp;
+            showTooltip(e, `${project}\n${formatXP(xp)} XP`);
+        });
+        bar.addEventListener('mouseleave', () => hideTooltip());
+    });
 }
 
 /**
- * Draw spider/radar chart for skills
- * @param {Object} skills - Object with skill names and values
- * @param {string} svgId - ID of the SVG element
- * @param {string} color - Primary color for the chart
- * @param {Object} skillProjects - Map of skill to last project
+ * Draw spider chart matching Original Website
  */
-function drawSpiderChart(skills, svgId, color, skillProjects) {
+function drawSpiderChart(skills, svgId, color, skillLastProject, chartType) {
     const svg = document.getElementById(svgId);
     const cx = 200, cy = 200, maxRadius = 130;
-    const skillNames = Object.keys(skills);
-    const skillValues = Object.values(skills);
+    
+    const technicalSkillsOrder = ['prog', 'algo', 'sys-admin', 'front-end', 'back-end', 'game', 'tcp'];
+    const technologiesOrder = ['go', 'js', 'html', 'css', 'unix', 'docker', 'sql'];
+    
+    const orderedSkills = chartType === 'technical' ? technicalSkillsOrder : technologiesOrder;
+    
+    const sortedSkills = [];
+    const sortedProjects = {};
+    
+    orderedSkills.forEach(skillName => {
+        if (skills[skillName] !== undefined) {
+            sortedSkills.push({ name: skillName, value: skills[skillName] });
+            sortedProjects[skillName] = skillLastProject[skillName] || 'No recent project';
+        }
+    });
+    
+    Object.keys(skills).forEach(skillName => {
+        if (!orderedSkills.includes(skillName)) {
+            sortedSkills.push({ name: skillName, value: skills[skillName] });
+            sortedProjects[skillName] = skillLastProject[skillName] || 'No recent project';
+        }
+    });
+    
+    const skillNames = sortedSkills.map(s => s.name);
+    const skillValues = sortedSkills.map(s => s.value);
     const maxValue = Math.max(...skillValues, 1);
     const numSkills = skillNames.length;
 
     if (numSkills === 0) {
-        svg.innerHTML = `<text x="200" y="200" text-anchor="middle" fill="#64748b" font-size="14">No data available</text>`;
+        svg.innerHTML = `<text x="200" y="200" text-anchor="middle" fill="#64748b" font-size="14">No data</text>`;
         return;
     }
 
@@ -229,20 +289,21 @@ function drawSpiderChart(skills, svgId, color, skillProjects) {
         </defs>
     `;
 
-    // Draw concentric circles
-    for (let i = 1; i <= 5; i++) {
-        const r = (maxRadius / 5) * i;
-        svgContent += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(167, 139, 250, 0.08)" stroke-width="1"/>`;
+    for (let i = 1; i <= 10; i++) {
+        const r = (maxRadius / 10) * i;
+        svgContent += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(167, 139, 250, 0.1)" stroke-width="1"/>`;
     }
 
-    // Draw skill axes and points
     const points = [];
     for (let i = 0; i < numSkills; i++) {
         const angle = (Math.PI * 2 * i) / numSkills - Math.PI / 2;
-        const x = cx + Math.cos(angle) * maxRadius;
-        const y = cy + Math.sin(angle) * maxRadius;
+        
+        const xLabel = cx + Math.cos(angle) * (maxRadius + 35);
+        const yLabel = cy + Math.sin(angle) * (maxRadius + 35);
 
-        svgContent += `<line x1="${cx}" y1="${cy}" x2="${x}" y2="${y}" stroke="rgba(167, 139, 250, 0.15)" stroke-width="1"/>`;
+        const xAxis = cx + Math.cos(angle) * maxRadius;
+        const yAxis = cy + Math.sin(angle) * maxRadius;
+        svgContent += `<line x1="${cx}" y1="${cy}" x2="${xAxis}" y2="${yAxis}" stroke="rgba(167, 139, 250, 0.2)" stroke-width="1"/>`;
 
         const value = skillValues[i];
         const radius = (value / maxValue) * maxRadius;
@@ -250,49 +311,51 @@ function drawSpiderChart(skills, svgId, color, skillProjects) {
         const py = cy + Math.sin(angle) * radius;
         points.push({ x: px, y: py, name: skillNames[i], value: value });
 
-        // Skill labels
-        const labelRadius = maxRadius + 35;
-        const lx = cx + Math.cos(angle) * labelRadius;
-        const ly = cy + Math.sin(angle) * labelRadius;
-
         svgContent += `
-            <text x="${lx}" y="${ly}" text-anchor="middle" font-size="11" fill="${color}" font-weight="600">
-                ${skillNames[i].toUpperCase()}
+            <text x="${xLabel}" y="${yLabel}" text-anchor="middle" dominant-baseline="middle" font-size="10" fill="${color}" font-weight="600" style="text-transform: uppercase;">
+                ${skillNames[i]}
             </text>
         `;
     }
 
-    // Draw polygon
     const polygonPoints = points.map(p => `${p.x},${p.y}`).join(' ');
     svgContent += `
-        <polygon points="${polygonPoints}" fill="url(#${svgId}Grad)" stroke="${color}" stroke-width="2" opacity="0">
-            <animate attributeName="opacity" from="0" to="1" dur="1s" fill="freeze"/>
-        </polygon>
+        <polygon points="${polygonPoints}" fill="url(#${svgId}Grad)" stroke="${color}" stroke-width="2" opacity="0.8"/>
     `;
 
-    // Draw skill points with tooltips
-    points.forEach((point, i) => {
-        const lastProject = skillProjects[point.name] || 'No recent project';
+    points.forEach((point) => {
+        const lastProject = sortedProjects[point.name] || 'N/A';
         svgContent += `
-            <polygon class="skill-point" 
-                points="${point.x},${point.y-6} ${point.x+5},${point.y+4} ${point.x-5},${point.y+4}"
-                fill="${color}" stroke="#fff" stroke-width="1.5" opacity="0"
-                onmouseover="showTooltip(event, '${point.name}: ${point.value}<br>Last used: ${lastProject}')"
-                onmouseout="hideTooltip()">
-                <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="${0.5 + i * 0.1}s" fill="freeze"/>
-            </polygon>
+            <circle class="skill-point" 
+                cx="${point.x}" cy="${point.y}" r="4"
+                fill="#fff" stroke="${color}" stroke-width="2" 
+                data-name="${point.name}" 
+                data-value="${point.value}" 
+                data-project="${lastProject}"
+                style="cursor: pointer;"
+            />
         `;
     });
 
     svg.innerHTML = svgContent;
+
+    svg.querySelectorAll('.skill-point').forEach(point => {
+        point.addEventListener('mouseenter', (e) => {
+            const name = e.target.dataset.name;
+            const value = e.target.dataset.value;
+            const project = e.target.dataset.project;
+            showTooltip(e, `${name.toUpperCase()}: ${value}\nLast: ${project}`);
+        });
+        point.addEventListener('mouseleave', () => hideTooltip());
+    });
 }
 
 /**
- * Main function to load and display user profile data
+ * Main function to load profile data
  */
 async function loadProfile() {
     try {
-        // Fetch user info
+        // QUERY 1: Get user info
         const userQuery = `{
             user {
                 id
@@ -306,70 +369,129 @@ async function loadProfile() {
         const userData = await query(userQuery);
         const user = userData.data.user[0];
 
-        // console.log("=== USER DATA ===", user);
-
-        // Set display name (prefer firstName, fallback to login)
         const displayName = user.firstName
             ? `${user.firstName} ${user.lastName || ''}`.trim()
             : user.login;
-
         setText("user-name", displayName);
 
-        // Fetch all transactions
-        const transactionQuery = `{
+        // QUERY 2: Get completed project paths
+        const completedProjectsQuery = `{
             transaction(
-                where: { userId: { _eq: ${user.id} } }
+                where: {
+                    userId: { _eq: ${user.id} }
+                    type: { _like: "skill_%" }
+                    path: { _like: "%bh-module%" }
+                }
+            ) {
+                path
+            }
+        }`;
+        const completedProjectsData = await query(completedProjectsQuery);
+        const completedPaths = [...new Set(completedProjectsData.data.transaction.map(t => t.path))];
+
+        // QUERY 3: Get all XP transactions
+        const xpTransactionsQuery = `{
+            transaction(
+                where: {
+                    userId: { _eq: ${user.id} }
+                    type: { _eq: "xp" }
+                }
                 order_by: { createdAt: asc }
             ) {
                 id
-                type
                 amount
                 createdAt
                 path
             }
         }`;
-        const transactionData = await query(transactionQuery);
-        const allTransactions = transactionData.data.transaction;
+        const xpTransactionsData = await query(xpTransactionsQuery);
+        const allXPTransactions = xpTransactionsData.data.transaction;
 
-        // console.log("=== TRANSACTIONS ===", allTransactions.length);
-
-        // Get completed project paths (have skill_ transactions)
-        const skillTransactionPaths = new Set();
-        allTransactions.forEach(t => {
-            if (t.type.startsWith('skill_') && t.path && t.path.includes('bh-module')) {
-                skillTransactionPaths.add(t.path);
-            }
-        });
-
-        // Calculate Module XP - only XP from completed projects
-        const xpTransactions = allTransactions.filter(t => t.type === 'xp');
-        const moduleXP = xpTransactions.filter(t =>
-            t.path && skillTransactionPaths.has(t.path)
-        ).reduce((sum, t) => sum + t.amount, 0);
-
-        // console.log("=== MODULE XP ===", moduleXP);
+        // Calculate Module XP
+        const moduleXP = allXPTransactions
+            .filter(t => completedPaths.includes(t.path))
+            .reduce((sum, t) => sum + t.amount, 0);
+        
         setText("module-xp", formatXP(moduleXP));
 
-        // Calculate current level
-        const levelTransactions = allTransactions
-            .filter(t => t.type === 'level')
-            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        const currentLevel = levelTransactions.length > 0 ? levelTransactions[0].amount + 1 : 0;
+        // QUERY 4: Get level
+        const levelQuery = `
+            query GetUserMainEventAndLevel {
+                event_user(
+                    where: {
+                        eventId: { _in: [72, 20, 250, 763] }
+                        userId: { _eq: ${user.id} }
+                    }
+                ) {
+                    level
+                    userId
+                    userLogin
+                    eventId
+                }
+            }
+        `;
+        const levelData = await query(levelQuery);
+        const eventUserData = levelData.data.event_user;
+        const currentLevel = eventUserData.length > 0 ? eventUserData[0].level : 0;
         setText("current-level", currentLevel);
-        setText("audit-ratio", user.auditRatio.toFixed(2));
 
-        // Process skills data
+        // Audit ratio to 1 decimal
+        setText("audit-ratio", parseFloat(user.auditRatio).toFixed(1));
+
+        // QUERY 5: Get all transactions for project grouping
+        const allTransactionsQuery = `{
+            transaction(
+                where: {
+                    userId: { _eq: ${user.id} }
+                    type: { _eq: "xp" }
+                }
+            ) {
+                path
+                amount
+            }
+        }`;
+        const allTransData = await query(allTransactionsQuery);
+        
+        const projectMap = {};
+        allTransData.data.transaction.forEach(t => {
+            const projectName = t.path.split('/').pop() || 'unknown';
+            projectMap[projectName] = (projectMap[projectName] || 0) + t.amount;
+        });
+        const projectXPArray = Object.entries(projectMap).sort((a, b) => b[1] - a[1]);
+
+        // QUERY 6: Get skills data
+        const skillsQuery = `{
+            transaction(
+                where: {
+                    userId: { _eq: ${user.id} }
+                    type: { _like: "skill_%" }
+                }
+                order_by: { createdAt: desc }
+            ) {
+                type
+                amount
+                path
+                createdAt
+            }
+        }`;
+        const skillsData = await query(skillsQuery);
+        
         const langSkills = {};
         const techSkills = {};
         const skillLastProject = {};
-
+        const skillLastDate = {};
         const programmingLangs = ['go', 'js', 'sql', 'python', 'java', 'c', 'cpp', 'rust', 'html', 'css', 'ts'];
 
-        allTransactions.filter(t => t.type.startsWith('skill_')).forEach(t => {
+        skillsData.data.transaction.forEach(t => {
             const skillName = t.type.replace('skill_', '');
             const projectName = t.path.split('/').pop() || 'unknown';
-            skillLastProject[skillName] = projectName;
-
+            const createdAt = t.createdAt;
+            
+            if (!skillLastDate[skillName] || new Date(createdAt) > new Date(skillLastDate[skillName])) {
+                skillLastDate[skillName] = createdAt;
+                skillLastProject[skillName] = projectName;
+            }
+            
             if (programmingLangs.includes(skillName.toLowerCase())) {
                 langSkills[skillName] = (langSkills[skillName] || 0) + t.amount;
             } else {
@@ -377,22 +499,18 @@ async function loadProfile() {
             }
         });
 
-        // console.log("=== SPIDER CHART DATA ===");
-        // console.log("Languages:", langSkills);
-        // console.log("Tech Skills:", techSkills);
+        // Draw charts
+        drawLineChart(allXPTransactions);
+        drawBarChart(projectXPArray);
+        drawSpiderChart(techSkills, 'spider-lang', '#a78bfa', skillLastProject, 'technical');
+        drawSpiderChart(langSkills, 'spider-tech', '#ec4899', skillLastProject, 'technology');
 
-        // Draw all charts
-        drawLineChart(xpTransactions);
-        drawBarChart(xpTransactions);
-        drawSpiderChart(langSkills, 'spider-lang', '#a78bfa', skillLastProject);
-        drawSpiderChart(techSkills, 'spider-tech', '#ec4899', skillLastProject);
-
-        // Show content, hide loading
+        // Show content
         document.getElementById("loading").style.display = "none";
         document.getElementById("content").style.display = "block";
 
     } catch (err) {
-        // console.error(err);
+        console.error("=== FATAL ERROR ===", err);
         document.getElementById("loading").innerHTML = `
             <p style="color: #ef4444;">✦ Failed to load data</p>
             <p style="font-size: 0.9rem; color: #64748b;">${err.message}</p>
@@ -401,13 +519,12 @@ async function loadProfile() {
 }
 
 /**
- * Logout user and redirect to login
+ * Logout user
  */
 function logout() {
     sessionStorage.removeItem("jwt");
     window.location.href = "index.html";
 }
 
-// Initialize profile on page load
+// Initialize
 loadProfile();
-
