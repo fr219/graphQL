@@ -30,7 +30,7 @@
       <p>Loading your cosmic journey...</p>
     </div>
 
-    <!-- Main content (hidden until data loads) -->
+    <!-- Main content -->
     <div id="content" style="display: none;">
       <!-- Welcome section -->
       <section class="welcome-section">
@@ -62,25 +62,25 @@
         </div>
       </div>
 
-      <!-- Line chart: XP over time -->
+      <!-- Line chart -->
       <div class="chart-card">
         <div class="chart-header">
           <h2 class="chart-title">✦ XP Journey Timeline</h2>
           <p class="chart-subtitle">Your experience progression through space</p>
         </div>
-        <svg id="line-chart" viewBox="0 0 900 350"></svg>
+        <svg id="line-chart" viewBox="0 0 900 350" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
 
-      <!-- Bar chart: XP per project -->
+      <!-- Bar chart -->
       <div class="chart-card">
         <div class="chart-header">
           <h2 class="chart-title">🚀 XP Earned Per Project</h2>
           <p class="chart-subtitle">Your top performing missions</p>
         </div>
-        <svg id="bar-chart" viewBox="0 0 900 400"></svg>
+        <svg id="bar-chart" viewBox="0 0 900 400" preserveAspectRatio="xMidYMid meet"></svg>
       </div>
 
-      <!-- Spider charts: Skills -->
+      <!-- Spider charts -->
       <div class="chart-card">
         <div class="chart-header">
           <h2 class="chart-title">🕸️ Skills Analysis</h2>
@@ -88,24 +88,23 @@
         </div>
         <div class="skills-grid">
           <div>
-            <h3 style="text-align: center; color: #a78bfa; margin-bottom: 1rem;">Programming Languages</h3>
-            <svg id="spider-lang" viewBox="0 0 400 400"></svg>
+            <h3 style="text-align: center; color: #a78bfa; margin-bottom: 1rem;">Technical Skills</h3>
+            <svg id="spider-lang" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet"></svg>
           </div>
           <div>
-            <h3 style="text-align: center; color: #ec4899; margin-bottom: 1rem;">Technical Skills</h3>
-            <svg id="spider-tech" viewBox="0 0 400 400"></svg>
+            <h3 style="text-align: center; color: #ec4899; margin-bottom: 1rem;">Technologies</h3>
+            <svg id="spider-tech" viewBox="0 0 400 400" preserveAspectRatio="xMidYMid meet"></svg>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Tooltip element -->
+  <!-- Tooltip -->
   <div class="tooltip" id="tooltip"></div>
 
-  <!-- Load scripts -->
+  <!-- Scripts -->
   <script src="js/ui.js" defer></script>
   <script src="js/profile.js" defer></script>
 </body>
 </html>
-
